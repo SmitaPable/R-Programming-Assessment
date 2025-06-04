@@ -41,9 +41,9 @@ Perform exploratory data analysis (EDA) to uncover insights into the e-book mark
 
 ## Files Included
 
-- `part1_babynames_analysis.R` — R script analyzing baby names and creating popularity plots.  
-- `part2_kindle_books_exploration.R` — R script for exploring the Amazon Kindle Books dataset.  
-- `R_Assessment_Report.docx` — One-page Word document containing the graphs and a summary of the analysis.  
+- `GGplotForPopularNames.R` — R script analyzing baby names and creating popularity plots.  
+- `PART 2Data exploration.R` — R script for exploring the Amazon Kindle Books dataset.  
+- `AC50002R.docx` — One-page Word document containing the graphs and a summary of the analysis.  
 
 ---
 
