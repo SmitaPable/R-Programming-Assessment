@@ -1,0 +1,218 @@
+# Install packages and Load necessary libraries
+install.packages("tidyverse")
+install.packages("tidyr")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("tibble")
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(scales)
+# Import the csv file of dataset
+kindle_data <- read.csv("C:\\Users\\DELL\\Desktop\\Sem1\\Sem1\\Programming language\\R\\archive\\kindle_data-v2.csv")
+
+#To display the structure of kindle_data(Our dataset)
+str(kindle_data)
+
+#To display summary of the numeric variables and factors
+summary(kindle_data)
+
+#1.Simple Distribution of Stars
+  #Create histogram to display stars distribution across all the books
+  kindle_data %>%
+  ggplot(aes(x = stars)) + #specify the x-axis as "stars"
+  
+  #adding specifications to histogram like binwidth, fill color, border color
+  geom_histogram(binwidth = 0.1, fill = "skyblue", color = "black") +
+  
+  #add labels to the plot
+  labs(title = "Distribution of Stars", # Add a title to the plot
+       x = "Stars",  # Label the x-axis as 'Stars'
+       y = "Count of books") +  # Label the y-axis as 'Count of books'
+  theme(
+    panel.background = element_rect(fill = "beige"))
+
+#2. Top 5 Most Expensive Books and Their Publishers"
+  # Arrange the dataset in descending order of price
+  top_expensive_books <- kindle_data %>%
+    arrange(desc(price)) %>%
+    head(5) #select top 5
+  view(top_expensive_books)
+  # Plot the top 10 most expensive books and their soldBy with price annotations
+  ggplot(top_expensive_books, aes(x = fct_reorder(title, price), y = price, fill = soldBy)) +
+    # Add text annotations for the price above each bar
+    geom_text(aes(label = sprintf("$%.2f", price)), vjust = -0.5, size = 3) +
+    geom_col() +
+    # Add plot labels and title
+    labs(title = "Top 5 Most Expensive Books and Their Publishers",
+         x = "Book Title",
+         y = "Price",
+         fill = "Publisher") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for better readability
+  
+  
+
+#3.Top 10 Best selling Categories and Their Average Prices:
+  
+    # Filter the dataset to include only best-selling books
+    categories <- kindle_data %>%
+    filter(isBestSeller == "True") %>%
+    group_by(category_name) %>%
+    
+    # Calculate the average price for each category with removing missing values
+    summarise(avg_price = mean(price, na.rm = TRUE), 
+              count = n()) %>%   # Count the number of books in each category
+    arrange(desc(count)) %>% # Arrange in descending order of count
+    head(10)  #select top 10 categories
+  view(categories)
+  #plot ggplot with a bar plot for 10 best selling categories and thier avg prices
+  categories %>%
+    ggplot(aes(x = fct_reorder(category_name, count), y = count, fill = avg_price)) +
+    geom_col() +
+    scale_fill_gradient(low = "lightblue", high = "darkblue") + # Fill colors based on average price
+    
+    # Add a title to the plot and labeling X and Y axis also fill legend
+    labs(title = "Top 10 Best-Selling Categories",
+         x = "Categories",
+         y = "Count",
+         fill = "Average Price") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+    scale_y_continuous(labels = scales::comma_format())  # formatting y-axis labels
+  
+  
+
+  
+#4.Kindle Unlimited Impact:
+
+  # Group by Kindle Unlimited availability and calculate average reviews
+  summary_data <- kindle_data %>%
+  group_by(isKindleUnlimited) %>%
+  # Calculate the average reviews with removing missing values
+  summarise(avg_reviews = mean(reviews, na.rm = TRUE)) 
+  
+  # View the summary data to inspect the results
+  view(summary_data) 
+  
+  # Plot the comparison by using ggplot with a bar plot:
+  ggplot(summary_data, aes(x = isKindleUnlimited, y = avg_reviews, fill = isKindleUnlimited)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Create a bar plot with dodged bars
+    
+  # Add a title to the plot and labeling X and Y axis also fill legend
+  labs(title = "Average Reviews for Kindle Unlimited Availability",
+       x = "Kindle Unlimited Availability",
+       y = "Average Reviews") +
+  theme_minimal() +  # Apply a minimal theme for a clean appearance
+    theme(
+  panel.background = element_rect(fill = "beige"))  # Set panel background color
+  
+
+#5.Identify the most popular authors based on their number of published books and ratings.
+  # Filtered out records with missing or empty author names
+  kindle_data_filtered <- kindle_data %>%
+    filter(!is.na(author) & author != "")
+  
+  # Group by author and calculate the total number of books and average rating(excluding missing stars)
+  author_popularity <- kindle_data_filtered %>%
+    group_by(author) %>%
+    summarise(total_books = n(),
+              average_rating = mean(stars, na.rm = TRUE))
+
+  # Arrange in descending order based on the total number of books
+  author_popularity <- author_popularity %>%
+    arrange(desc(total_books))
+  view(author_popularity)
+  # Take the top 10 authors
+  top_authors <- head(author_popularity, 10)
+  view(top_authors)
+  
+  # Plot the line graph with points and annotate with ratings
+  ggplot(top_authors, aes(x = reorder(author, total_books), y = total_books, group = 1)) +
+    geom_line(color = "lightblue", size = 1) +  # Line graph
+    geom_point(color = "darkblue", size = 4) +  # Points with rating labels
+    labs(title = "Top 10 Authors by Total Number of Published Books",
+         x = "Author",
+         y = "Total Number of Books") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_text(aes(label = sprintf("%.2f", average_rating)),hjust = -0.2, vjust = -0.5)  # Adjust the position of rating labels
+    
+  
+#6. Plot the horizontal bar plot for all categories based on Reviews and GoodReads Choice Status
+  # Filter out categories with zero reviews
+  filtered_data <- kindle_data %>%
+    filter(reviews > 0)
+  
+  ggplot(filtered_data, aes(x = fct_reorder(category_name, reviews), y = reviews, fill = isGoodReadsChoice)) +
+  
+  # Use geom_bar for a bar plot with identity statistic and alpha transparency
+  geom_bar(stat = "identity", alpha = 0.8) +
+  
+  # Format y-axis labels using comma separators
+  scale_y_continuous(labels = scales::comma_format()) +
+  
+  # Set plot title and axis labels
+  labs(title = "# Bar Plot of All Categories Based on Reviews and GoodReads Choice Status",
+       x = "Categories",
+       y = "Reviews",
+       fill = "Is GoodReads Choice") +
+  theme_minimal() +
+  
+  theme(axis.text.y = element_text(hjust = 0)) +  # Adjust the position of y-axis labels
+  coord_flip() +  # Flip the axes for better readability
+  guides(fill = guide_legend(title = "Goodreads Choice"))  # Add legend title
+  
+  
+#7. Display Top 10 Free Categories with Stars >= 4
+  # Filter free books with stars greater than or equal to 4
+  top_free_categories <- kindle_data %>%
+    filter(price == "0" & as.numeric(stars) >= 4) %>%
+    group_by(category_name) %>%
+    summarise(
+      book_count = n(),  # Count the number of books in each category
+      average_stars = mean(as.numeric(stars), na.rm = TRUE)  # Calculate the average stars in each category
+    ) %>%
+    arrange(desc(book_count)) %>%  # Arrange categories in descending order based on book count
+    head(10)  # Select the top 10 categories
+  view(top_free_categories)
+  
+  # Plot a bar graph for the top 10 free categories
+  ggplot(top_free_categories, aes(x = fct_reorder(category_name, book_count), y = book_count, fill = category_name)) +
+    geom_col() +  # Use geom_col for a bar plot
+    geom_text(aes(label = sprintf("%.2f", average_stars)), hjust = -0.2, vjust = -0.5, size = 3) +  # Add labels with average stars
+    labs(
+      title = "Top 10 Free Categories with Stars >= 4",
+      x = "Category",
+      y = "Book Count",
+      fill = "Category"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_discrete(guide = FALSE)  # Remove legend for fill
+  
+
+  
+#8. Distribution of Top 10 Publishers (based on book counts) through out the data
+  # Filter out missing values in the 'soldBy' column
+  kindle_data_filtered <- kindle_data %>%
+    filter(!is.na(soldBy) & soldBy != "")
+  
+  # Create a data frame with top 10 publisher counts
+  top_publishers <- kindle_data_filtered %>%
+    group_by(soldBy) %>%
+    summarise(count = n()) %>%
+    arrange(desc(count)) %>%
+    head(10)
+  view(top_publishers)
+  # Create a pie chart for the top 10 publishers with count labels in legends
+  ggplot(top_publishers, aes(x = "", y = count, fill = soldBy, show.legend = FALSE)) +
+    geom_bar(stat = "identity", width = 1) +
+    coord_polar("y") +  # Make it a pie chart
+    labs(title = "Top 10 Publishers by Number of Books Sold") +
+    theme_void() +  # Remove unnecessary elements
+    theme(legend.position = "right") +  # Adjust legend position
+    guides(fill = guide_legend(title = "Publisher"))  # Add legend title
+  
